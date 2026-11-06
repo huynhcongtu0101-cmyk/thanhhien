@@ -1,11 +1,112 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <title>My Website</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f5f7fb">
+<title>Thư viện tài liệu</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--ink:#182230;--muted:#667085;--line:#e6eaf0;--blue:#2563eb;--soft:#eff6ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1120px;margin:auto;padding:34px 20px 60px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px}
+h1{font-size:clamp(25px,4vw,34px);margin:0;letter-spacing:-.7px}.sub{color:var(--muted);margin:5px 0 0}
+.status{font-size:12px;color:#087443;background:#e8f7ef;border-radius:999px;padding:7px 11px;white-space:nowrap}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0 14px}
+.search{flex:1;min-width:220px;padding:12px 15px;border:1px solid var(--line);border-radius:12px;background:white;font:inherit;outline:none}
+.search:focus{border-color:#8bb4ff;box-shadow:0 0 0 3px #dbeafe}
+select{padding:11px 13px;border:1px solid var(--line);border-radius:12px;background:#fff;font:inherit;color:var(--ink)}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:10px;color:var(--muted);font-size:13px;margin:12px 2px 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:15px}
+.item{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px;display:flex;flex-direction:column;min-width:0;transition:.15s}
+.item:hover{transform:translateY(-2px);box-shadow:0 8px 25px #1d293910;border-color:#cbd5e1}
+.thumb{height:126px;background:#f8fafc;border-radius:11px;display:grid;place-items:center;margin-bottom:13px;overflow:hidden}
+.thumb img{height:100%;width:100%;object-fit:contain;padding:12px}
+.filename{font-weight:650;overflow-wrap:anywhere;line-height:1.35;margin-bottom:7px}
+.details{font-size:12px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.actions{display:flex;gap:8px;margin-top:auto}
+.btn{display:inline-flex;justify-content:center;align-items:center;text-decoration:none;border-radius:9px;padding:9px 12px;font-weight:600;font-size:13px;flex:1}
+.open{background:var(--soft);color:var(--blue)}.download{background:#f2f4f7;color:#344054}
+.empty{grid-column:1/-1;text-align:center;padding:55px 15px;background:#fff;border:1px dashed #cbd5e1;border-radius:16px;color:var(--muted)}
+footer{text-align:center;color:#98a2b3;font-size:12px;margin-top:35px}
+@media(max-width:520px){.wrap{padding:22px 14px 40px}header{align-items:flex-start}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.item{padding:10px}.thumb{height:105px}.filename{font-size:13px}.actions{gap:5px}.btn{font-size:12px;padding:8px 5px}}
+</style>
 </head>
 <body>
-    <h1>Welcome to My Website</h1>
-    <p>This is the homepage.</p>
+<main class="wrap">
+  <header>
+    <div><h1>Thư viện tài liệu</h1><p class="sub">Kho lưu trữ giáo án và tài liệu</p></div>
+    <span class="status">● Trực tuyến</span>
+  </header>
+  <section class="toolbar">
+    <input id="search" class="search" type="search" placeholder="Tìm theo tên tài liệu hoặc thư mục..." autocomplete="off">
+    <select id="filter" aria-label="Lọc loại tài liệu">
+      <option value="all">Tất cả tài liệu</option><option value="word">Word</option><option value="pdf">PDF</option>
+    </select>
+    <select id="sort" aria-label="Sắp xếp">
+      <option value="name">Tên A → Z</option><option value="newest">Mới cập nhật</option><option value="largest">Dung lượng lớn nhất</option>
+    </select>
+  </section>
+  <div class="meta"><span id="count">Đang tải danh sách...</span><span id="updated"></span></div>
+  <section id="files" class="grid" aria-live="polite"></section>
+  <footer>Thư viện tài liệu · Tự cập nhật sau mỗi lần upload</footer>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+let allFiles = [];
+const base = new URL('.', window.location.href);
+function fileUrl(path) {
+  return new URL(path.split('/').map(encodeURIComponent).join('/'), base).href;
+}
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function render() {
+  const q = $('#search').value.trim().toLocaleLowerCase('vi');
+  const kind = $('#filter').value;
+  const sort = $('#sort').value;
+  let list = allFiles.filter(f => {
+    const text = (f.name + ' ' + f.path).toLocaleLowerCase('vi');
+    return (!q || text.includes(q)) && (kind === 'all' || f.type === kind);
+  });
+  if (sort === 'name') list.sort((a,b) => a.name.localeCompare(b.name,'vi'));
+  if (sort === 'newest') list.sort((a,b) => String(b.modified||'').localeCompare(String(a.modified||'')));
+  if (sort === 'largest') list.sort((a,b) => (b.sizeBytes||0)-(a.sizeBytes||0));
+  $('#count').textContent = `${list.length} / ${allFiles.length} tài liệu`;
+  const host = $('#files');
+  if (!list.length) {
+    host.innerHTML = '<div class="empty">Không tìm thấy tài liệu phù hợp.</div>';
+    return;
+  }
+  host.innerHTML = list.map(f => {
+    const thumb = f.type === 'pdf' ? 'pdf.jpg' : 'word.jpg';
+    const url = fileUrl(f.path);
+    const folder = f.path.includes('/') ? f.path.substring(0,f.path.lastIndexOf('/')) : 'Thư mục chính';
+    return `<article class="item">
+      <div class="thumb"><img loading="lazy" src="${thumb}" alt="${f.type==='pdf'?'PDF':'Word'}" onerror="this.style.display='none'"></div>
+      <div class="filename" title="${escapeHtml(f.name)}">${escapeHtml(f.name)}</div>
+      <div class="details"><span>${f.type==='pdf'?'PDF':'Word'}</span><span>${escapeHtml(f.size||'')}</span><span>${escapeHtml(folder)}</span></div>
+      <div class="actions"><a class="btn open" href="${url}" target="_blank" rel="noopener">Mở file</a><a class="btn download" href="${url}" download>Tải về</a></div>
+    </article>`;
+  }).join('');
+}
+async function init() {
+  try {
+    const response = await fetch('files.json?v=' + Date.now(), {cache:'no-store'});
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    allFiles = await response.json();
+    if (!Array.isArray(allFiles)) throw new Error('files.json không đúng định dạng');
+    $('#updated').textContent = 'Danh mục đã tải';
+    render();
+  } catch (e) {
+    $('#count').textContent = 'Chưa tải được danh sách';
+    $('#files').innerHTML = `<div class="empty">Không đọc được files.json.<br>Hãy chạy uploader và kiểm tra GitHub Pages đã được bật.<br><small>${escapeHtml(e.message)}</small></div>`;
+  }
+}
+$('#search').addEventListener('input',render);
+$('#filter').addEventListener('change',render);
+$('#sort').addEventListener('change',render);
+init();
+</script>
 </body>
 </html>
