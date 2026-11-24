@@ -85,9 +85,9 @@ function render() {
     const url = fileUrl(f.path);
     const folder = f.path.includes('/') ? f.path.substring(0,f.path.lastIndexOf('/')) : 'Thư mục chính';
     return `<article class="item">
-      <div class="thumb"><img loading="lazy" src="${thumb}" alt="${f.type==='pdf'?'PDF':'Word'}" onerror="this.style.display='none'"></div>
+      <div class="thumb"><img loading="lazy" src="${thumb}" alt="${f.type==='pdf'?'PDF':'Word':'CDR'}" onerror="this.style.display='none'"></div>
       <div class="filename" title="${escapeHtml(f.name)}">${escapeHtml(f.name)}</div>
-      <div class="details"><span>${f.type==='pdf'?'PDF':'Word'}</span><span>${escapeHtml(f.size||'')}</span><span>${escapeHtml(folder)}</span></div>
+      <div class="details"><span>${f.type==='pdf'?'PDF':'Word':'CDR'}</span><span>${escapeHtml(f.size||'')}</span><span>${escapeHtml(folder)}</span></div>
       <div class="actions"><a class="btn open" href="${url}" target="_blank" rel="noopener">Mở file</a><a class="btn download" href="${url}" download>Tải về</a></div>
     </article>`;
   }).join('');
