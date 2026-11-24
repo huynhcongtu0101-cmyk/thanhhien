@@ -14,5 +14,13 @@
         "sizeBytes":  151552,
         "size":  "148 KB",
         "modified":  "2026-05-17 08:12"
+    } ,
+    {
+        "name":  "File Bìa",
+        "path":  "data/bia.cdr",
+        "type":  "cdr",
+        "sizeBytes":  151552,
+        "size":  "148 KB",
+        "modified":  "2026-05-17 08:12"
     }
 ]
